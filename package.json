@@ -1,0 +1,29 @@
+{
+  "name": "framework-speak",
+  "version": "0.1.0",
+  "author": "Julian Bauer <julianlianbauer@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/rust/pkg",
+    "packages/web",
+    "packages/preload"
+  ],
+  "scripts": {
+    "web:dev": "yarn workspace web dev",
+    "web:build": "yarn workspace web build",
+    "web:preview": "yarn workspace web preview",
+    "web:check": "yarn workspace web check",
+    "rust:dev": "cd packages/rust && cargo watch -i .gitignore -i \"pkg/*\" -s \"wasm-pack build --target web\"",
+    "rust:build": "cd packages/rust && wasm-pack build --target web",
+    "preload": "cd packages/preload && cargo run --release",
+    "dev": "concurrently --kill-others-on-fail \"yarn web:dev\"  \"yarn rust:dev\"",
+    "build": "yarn rust:build && yarn web:build",
+    "ci:build": "yarn rust:build && yarn && yarn web:build",
+    "deploy": "touch build/.nojekyll && gh-pages -d build -t true"
+  },
+  "dependencies": {
+    "concurrently": "^6.3.0",
+    "gh-pages": "^4.0.0"
+  }
+}
