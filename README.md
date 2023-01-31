@@ -1,6 +1,6 @@
 # framework-speak
 
-Speak like a _real_ JavaScript developer.
+Speak like a _real_ JavaScript developer. You know, the ones that use frameworks. Enlighten yourself [here](https://ashwagandhae.github.io/framework-speak/).
 
 ## Credits
 

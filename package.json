@@ -20,7 +20,7 @@
     "dev": "concurrently --kill-others-on-fail \"yarn web:dev\"  \"yarn rust:dev\"",
     "build": "yarn rust:build && yarn web:build",
     "ci:build": "yarn rust:build && yarn && yarn web:build",
-    "deploy": "touch build/.nojekyll && gh-pages -d build -t true"
+    "deploy": "cd packages/web && touch dist/.nojekyll && gh-pages -d dist -t true"
   },
   "dependencies": {
     "concurrently": "^6.3.0",
