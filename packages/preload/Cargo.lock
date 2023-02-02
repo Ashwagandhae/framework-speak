@@ -234,20 +234,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gather-data"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "csv",
- "flate2",
- "itertools",
- "radix_trie",
- "reqwest",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -557,6 +543,20 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
+]
+
+[[package]]
+name = "output"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "csv",
+ "flate2",
+ "itertools",
+ "radix_trie",
+ "reqwest",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

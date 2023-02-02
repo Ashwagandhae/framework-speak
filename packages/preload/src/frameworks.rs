@@ -118,7 +118,10 @@ pub fn get_frameworks(out_path: &str, trie: CmuTrie) -> Result<()> {
                 .iter()
                 .any(|value| {
                     let s = value.as_str().unwrap();
-                    s == "framework" || s == "nodejs-framework" || s == "fullstack"
+                    s == "framework"
+                        || s == "nodejs-framework"
+                        || s == "fullstack"
+                        || s == "css-lib"
                 })
         })
         .map(|project| {
@@ -143,31 +146,34 @@ pub fn get_frameworks(out_path: &str, trie: CmuTrie) -> Result<()> {
         .collect();
     // sort by number of stars
     sorted.sort_by(|(stars, _), (other_stars, _)| other_stars.cmp(stars));
-    let ret: Vec<(String, String)> = sorted
+    let ret: Vec<(&u64, String, String)> = sorted
         .iter()
-        .map(|(_, name)| name.to_owned())
-        .map(|name| {
-            name.split(|c: char| c.is_ascii_whitespace())
-                // remove version number from name
-                .filter(|s| !s.chars().all(char::is_numeric))
-                // remove .js extension
-                .map(|s| s.trim_end_matches(".js"))
-                // remove .mjs extension
-                .map(|s| s.trim_end_matches(".mjs"))
-                // remove JS suffix
-                .map(|s| s.trim_end_matches("JS"))
-                .map(|s| s.trim_end_matches("js"))
-                // remove extra whitespace
-                .map(|s| s.trim())
-                .collect::<Vec<_>>()
-                .join(" ")
+        .map(|(stars, name)| {
+            (
+                stars,
+                name.split(|c: char| c.is_ascii_whitespace())
+                    // remove version number from name
+                    .filter(|s| !s.chars().all(char::is_numeric))
+                    // remove .js/JS/.mjs
+                    .map(|s| s.trim_end_matches(".js"))
+                    .map(|s| s.trim_end_matches(".mjs"))
+                    .map(|s| s.trim_end_matches("JS"))
+                    .map(|s| s.trim_end_matches("js"))
+                    // remove .css/CSS
+                    .map(|s| s.trim_end_matches(".css"))
+                    .map(|s| s.trim_end_matches("CSS"))
+                    // remove extra whitespace
+                    .map(|s| s.trim())
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            )
         })
-        .map(|name| (name.clone(), get_framework_pronounce(&name, &trie)))
+        .map(|(stars, name)| (stars, name.clone(), get_framework_pronounce(&name, &trie)))
         .collect();
     // write to csv
     let mut wtr = Writer::from_path(out_path)?;
-    for (name, pronounce) in ret {
-        wtr.write_record(&[name, pronounce])?;
+    for (stars, name, pronounce) in ret {
+        wtr.write_record(&[name, pronounce, stars.to_string()])?;
     }
     Ok(())
 }
