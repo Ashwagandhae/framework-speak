@@ -13,7 +13,7 @@
       {value}
     </span>
   </div>
-  <input type="range" {min} {max} {step} bind:value />
+  <input name={label} type="range" {min} {max} {step} bind:value />
 </div>
 
 <style>

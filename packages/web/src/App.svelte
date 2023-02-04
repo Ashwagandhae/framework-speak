@@ -31,8 +31,11 @@
       <h1>framework-speak.js</h1>
       <p>
         Replace english words with phonetically similar JavaScript frameworks,
-        to show that you are a <strong>real</strong> JavaScript developer.
+        to show your JavaScript skills.
       </p>
+      <div class="links">
+        <a href="https://github.com/Ashwagandhae/framework-speak.js">GitHub</a>
+      </div>
     </div>
     <div class="controls">
       <Control
@@ -82,13 +85,13 @@
       Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
   :global(body) {
-    --back: hsl(207, 26%, 90%);
+    --back: hsl(207, 26%, 88%);
     --fore: hsl(207, 26%, 95%);
     --fore-alt: hsl(207, 26%, 98%);
     --text-strong: hsl(200, 25%, 18%);
     --text: hsl(200, 25%, 30%);
     --text-weak: hsl(200, 10%, 50%);
-    --text-accent: hsl(207, 50%, 50%);
+    --text-accent: hsl(207, 70%, 50%);
 
     --pad: 0.8rem;
     --radius: 0.8rem;
@@ -118,7 +121,6 @@
   main {
     width: 100vw;
     height: 100vh;
-    max-height: 100vh;
     padding: var(--pad);
     box-sizing: border-box;
     gap: var(--pad);
@@ -137,7 +139,10 @@
   @media (max-width: 800px) {
     main {
       grid-template-columns: 1fr;
-      grid-template-rows: min-content 1fr 1fr;
+      grid-template-rows: min-content calc(50vh - var(--pad) * 1.5) calc(
+          50vh - var(--pad) * 1.5
+        );
+      height: auto;
       grid-template-areas:
         'info'
         'input'
@@ -199,6 +204,7 @@
     font-size: 1.5rem;
     line-height: 1.5em;
     overflow-wrap: break-word;
+    white-space: pre-line;
     width: 100%;
     height: 100%;
     color: inherit;
@@ -222,7 +228,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--pad);
-    width: min(20rem, 100%);
+    width: min(25rem, 100%);
     align-items: center;
   }
   @media (max-width: 800px) {
@@ -237,5 +243,17 @@
   }
   span.replace {
     color: var(--text-accent);
+  }
+  .links {
+    display: flex;
+    flex-direction: row;
+    gap: var(--pad);
+  }
+  .links a {
+    color: var(--text-accent);
+    text-decoration: none;
+  }
+  .links a:hover {
+    text-decoration: underline;
   }
 </style>
