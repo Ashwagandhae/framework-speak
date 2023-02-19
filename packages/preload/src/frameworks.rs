@@ -8,6 +8,34 @@ use serde_json::Value;
 const URL: &str = "https://bestofjs-static-api.vercel.app/projects.json";
 type CmuTrie = Trie<String, String>;
 
+fn special_word(name: &str) -> Option<&str> {
+    Some(match name {
+        "dva" => "DVA",
+        "Qwik" => "quick",
+        "tinyhttp" => "tiny http",
+        "Strapi" => "strap e",
+        "Actionhero" => "action hero",
+        "htmx" => "HTMX",
+        "Stylify" => "style ify",
+        "$mol" => "mole",
+        _ => return None,
+    })
+}
+fn special_pronounce(name: &str) -> Option<String> {
+    Some(
+        match name {
+            "NUXT" => "N AH K S T",
+            "BULMA" => "B AH L M AH",
+            "KOA" => "K OW AA",
+            "WINDI" => "W IH N D IY",
+            "TAILWIND" => "T EY L W IH N D",
+            "VITE" => "V IY T",
+            _ => return None,
+        }
+        .to_owned(),
+    )
+}
+
 fn guess_pronounce(word: &str) -> String {
     word.chars()
         .map(|c| match c {
@@ -39,16 +67,41 @@ fn guess_pronounce(word: &str) -> String {
             'Z' => "Z",
             _ => "",
         })
-        .map(|s| s.split_whitespace().collect::<Vec<_>>())
-        .flatten()
         .join(" ")
 }
 
-fn get_pronounce(word: &str, trie: &CmuTrie) -> String {
-    trie.get(word)
-        .map(|word| word.to_owned())
+const SUFFIX: &[(&str, &str)] = &[
+    ("IFY", "IH F AY"),
+    ("KIT", "K IH T"),
+    ("DOM", "D AA M"),
+    ("IZE", "AY Z"),
+    ("APP", "AE P"),
+    ("STACK", "S T AE K"),
+];
+
+fn get_suffix(s: &str) -> Option<(&str, &str)> {
+    for (suffix, pronounce) in SUFFIX.iter() {
+        if let Some(stripped) = s.strip_suffix(suffix) {
+            return Some((stripped, pronounce));
+        }
+    }
+    None
+}
+fn get_pronounce_rec(word: &str, trie: &CmuTrie, suffix: bool) -> String {
+    special_pronounce(word)
+        .or_else(|| trie.get(word).map(|s| s.to_owned()))
+        .or_else(|| {
+            if !suffix {
+                return None;
+            }
+            get_suffix(word).map(|(word, pronounce)| {
+                format!("{} {}", get_pronounce_rec(word, trie, false), pronounce)
+            })
+        })
         .unwrap_or_else(|| guess_pronounce(word))
-        .to_owned()
+}
+fn get_pronounce(word: &str, trie: &CmuTrie) -> String {
+    get_pronounce_rec(word, trie, true)
 }
 fn split_into_words(name: &str) -> Vec<String> {
     // detect if its just a word or has camel case, snake case, kebab case, has spaces, has punctuation
@@ -57,13 +110,15 @@ fn split_into_words(name: &str) -> Vec<String> {
     // - kebab case
     // - punctuation
     // - spaces
-    name.split(|c: char| c.is_ascii_whitespace() || c.is_ascii_punctuation())
-        .map(|part| {
+    special_word(name)
+        .unwrap_or(name)
+        .split(|c: char| c.is_ascii_whitespace() || c.is_ascii_punctuation())
+        .flat_map(|part| {
             // check if camel case
             let uppercase = part.chars().filter(char::is_ascii_uppercase).count();
             let is_camel_case = (part
                 .chars()
-                .nth(0)
+                .next()
                 .map(|c| c.is_ascii_uppercase())
                 .unwrap_or(false)
                 && uppercase > 2)
@@ -89,7 +144,6 @@ fn split_into_words(name: &str) -> Vec<String> {
                 vec![part.to_owned()]
             }
         })
-        .flatten()
         .filter(|part| !part.is_empty())
         .collect()
 }

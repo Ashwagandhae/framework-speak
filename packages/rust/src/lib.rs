@@ -7,7 +7,6 @@ use js_sys::Array;
 use replacer::Replacement;
 use replacer::Replacer;
 use serde_derive::Serialize;
-use serde_wasm_bindgen;
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -59,5 +58,11 @@ impl FrameworkReplacer {
             })
             .map(|replacement| serde_wasm_bindgen::to_value(&replacement).unwrap())
             .collect()
+    }
+}
+
+impl Default for FrameworkReplacer {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -1,8 +1,9 @@
 use itertools::Itertools;
 use radix_trie::Trie;
 use std::collections::HashMap;
-use std::ops::Add;
-use std::ops::Sub;
+
+mod distance;
+use distance::{consonant_distance, silent_consonant_distance, vowel_distance};
 
 pub struct Pronounce {
     phones: Vec<Phone>,
@@ -31,7 +32,7 @@ impl Pronounce {
             .into_iter()
             .flat_map(|(is_vowel, group)| {
                 if is_vowel {
-                    Itertools::intersperse_with(group, Phone::silent_consonant).collect::<Vec<_>>()
+                    Itertools::intersperse_with(group, || Phone::Silent).collect::<Vec<_>>()
                 } else {
                     group.collect::<Vec<_>>()
                 }
@@ -40,14 +41,14 @@ impl Pronounce {
 
         // add silent consonant at start and end if start/end is vowel
         if normal_phones[0].is_vowel() {
-            normal_phones.insert(0, Phone::silent_consonant());
+            normal_phones.insert(0, Phone::Silent);
         }
         if normal_phones
             .last()
             .map(|phone| phone.is_vowel())
             .unwrap_or(false)
         {
-            normal_phones.push(Phone::silent_consonant());
+            normal_phones.push(Phone::Silent);
         }
         // syllables should be the same as before
         Self {
@@ -58,7 +59,7 @@ impl Pronounce {
     fn get_grouped(&self) -> Vec<Vec<Phone>> {
         self.phones
             .iter()
-            .map(|phone| phone.clone())
+            .cloned()
             .group_by(|phone| phone.is_vowel())
             .into_iter()
             .map(|(_, group)| group.collect::<Vec<_>>())
@@ -79,15 +80,20 @@ impl Pronounce {
             .map(|(group, other_group)| {
                 // go from first to last phoneme in each group at the same speed, comparing each pair
                 let total_index = (group.len() * other_group.len()).clamp(0, 32);
-                let sum = (0..total_index)
+                let mut len_ratio = group.len() as f32 / other_group.len() as f32;
+                if len_ratio < 1.0 {
+                    len_ratio = 1.0 / len_ratio;
+                }
+
+                (0..total_index)
                     .map(|i| {
                         let phoneme = &group[i % group.len()];
                         let other_phoneme = &other_group[i % other_group.len()];
                         phoneme.distance(other_phoneme)
                     })
                     .sum::<f32>()
-                    / total_index as f32;
-                sum
+                    / total_index as f32
+                    * len_ratio
             })
             .sum::<f32>()
     }
@@ -97,54 +103,20 @@ impl Pronounce {
 pub enum Phone {
     Vowel(f32, f32),
     Consonant(f32, f32),
-}
-impl Add for Phone {
-    type Output = Self;
-    fn add(self, other: Self) -> Self {
-        match (self, other) {
-            (Phone::Vowel(x_1, y_1), Phone::Vowel(x_2, y_2)) => {
-                Phone::Vowel((x_1 + x_2) / 2.0, (y_1 + y_2) / 2.0)
-            }
-            (Phone::Consonant(x_1, y_1), Phone::Consonant(x_2, y_2)) => {
-                Phone::Consonant((x_1 + x_2) / 2.0, (y_1 + y_2) / 2.0)
-            }
-            _ => panic!("Cannot add vowel and consonant"),
-        }
-    }
-}
-impl Sub for Phone {
-    type Output = Self;
-    fn sub(self, other: Self) -> Self {
-        match (self, other) {
-            (Phone::Vowel(x_1, y_1), Phone::Vowel(x_2, y_2)) => {
-                Phone::Vowel((x_1 - x_2) / 2.0, (y_1 - y_2) / 2.0)
-            }
-            (Phone::Consonant(x_1, y_1), Phone::Consonant(x_2, y_2)) => {
-                Phone::Consonant((x_1 - x_2) / 2.0, (y_1 - y_2) / 2.0)
-            }
-            _ => panic!("Cannot subtract vowel and consonant"),
-        }
-    }
+    Silent,
 }
 impl Phone {
-    fn silent_consonant() -> Phone {
-        // use glotal approximant as silent consonant, because its impossible to pronounce
-        Phone::Consonant(7.0 / 8.0, 5.0 / 7.0)
-    }
-
     fn distance(&self, other: &Phone) -> f32 {
         match (self, other) {
-            (Phone::Vowel(x_1, y_1), Phone::Vowel(x_2, y_2)) => {
-                let x_diff = (x_1 - x_2).abs();
-                let y_diff = (y_1 - y_2).abs();
-                (x_diff + y_diff) / 2.0
-            }
+            (Phone::Vowel(x_1, y_1), Phone::Vowel(x_2, y_2)) => vowel_distance(x_1, x_2, y_1, y_2),
             (Phone::Consonant(x_1, y_1), Phone::Consonant(x_2, y_2)) => {
-                let x_diff = (x_1 - x_2).abs();
-                let y_diff = (y_1 - y_2).abs();
-                (x_diff + y_diff) / 2.0
+                consonant_distance(x_1, x_2, y_1, y_2)
             }
-            _ => panic!("Cannot subtract a vowel and a consonant"),
+            (Phone::Silent, Phone::Silent) => 0.0,
+            (Phone::Silent, Phone::Consonant(_, y)) | (Phone::Consonant(_, y), Phone::Silent) => {
+                silent_consonant_distance(y)
+            }
+            _ => panic!("tried to compare vowel and consonant"),
         }
     }
 
