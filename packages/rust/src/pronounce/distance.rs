@@ -1,5 +1,5 @@
 const VOWEL_WEIGHT: f32 = 2.0;
-const CONSONANT_WEIGHT: f32 = 0.4;
+const CONSONANT_WEIGHT: f32 = 0.25;
 
 pub fn vowel_distance(x_1: &f32, x_2: &f32, y_1: &f32, y_2: &f32) -> f32 {
     let x_diff = (x_1 - x_2).abs();
